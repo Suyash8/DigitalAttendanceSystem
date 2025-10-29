@@ -1,0 +1,115 @@
+package com.college.attendance.dao;
+
+import com.college.attendance.model.User;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class UserDao {
+
+    /**
+     * Creates a new user in the database.
+     * Assumes the user object's password is ALREADY HASHED.
+     * @param user The User object to create.
+     * @return The auto-generated user_id if successful, or -1 on failure.
+     */
+    public int createUser(User user) {
+        String sql = "INSERT INTO Users (first_name, last_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)";
+        int generatedUserId = -1;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            pstmt.setString(1, user.getFirstName());
+            pstmt.setString(2, user.getLastName());
+            pstmt.setString(3, user.getEmail());
+            pstmt.setString(4, user.getPasswordHash());
+            pstmt.setString(5, user.getRole());
+
+            int affectedRows = pstmt.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet rs = pstmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        generatedUserId = rs.getInt(1);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return generatedUserId;
+    }
+
+    /**
+     * Finds a user in the database by their email address.
+     * @param email The email of the user to find.
+     * @return A User object if found, otherwise null.
+     */
+    public User getUserByEmail(String email) {
+        String sql = "SELECT * FROM Users WHERE email = ?";
+        User user = null;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                user = mapResultSetToUser(rs);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return user;
+    }
+
+    /**
+     * Finds a user in the database by their ID.
+     * @param userId The ID of the user to find.
+     * @return A User object if found, otherwise null.
+     */
+    public User getUserById(int userId) {
+        String sql = "SELECT * FROM Users WHERE user_id = ?";
+        User user = null;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                user = mapResultSetToUser(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return user;
+    }
+
+    // We are not implementing updateUser and deleteUser right now as they are not
+    // needed for the current scope. But they would go here.
+
+    /**
+     * A helper method to map a ResultSet row to a User object to avoid code duplication.
+     * @param rs The ResultSet to map.
+     * @return A populated User object.
+     * @throws SQLException
+     */
+    private User mapResultSetToUser(ResultSet rs) throws SQLException {
+        User user = new User();
+        user.setUserId(rs.getInt("user_id"));
+        user.setFirstName(rs.getString("first_name"));
+        user.setLastName(rs.getString("last_name"));
+        user.setEmail(rs.getString("email"));
+        user.setPasswordHash(rs.getString("password_hash"));
+        user.setRole(rs.getString("role"));
+        user.setCreatedAt(rs.getTimestamp("created_at"));
+        return user;
+    }
+}
