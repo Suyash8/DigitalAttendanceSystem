@@ -17,7 +17,7 @@
     <hr>
     <h3>Your Actions:</h3>
     <ul>
-        <li><a href="#">Take Manual Attendance</a> (Coming Soon)</li>
+        <li><a href="${pageContext.request.contextPath}/manual-attendance?courseId=1">Take Manual Attendance for CS101</a></li>
         <li><a href="#">Start QR Code Session</a> (Coming Soon Phase 2)</li>
     </ul>
     <br>
