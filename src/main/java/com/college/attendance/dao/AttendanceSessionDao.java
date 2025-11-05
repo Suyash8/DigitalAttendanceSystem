@@ -2,10 +2,7 @@ package com.college.attendance.dao;
 
 import com.college.attendance.model.AttendanceSession;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 
 public class AttendanceSessionDao {
 
@@ -34,6 +31,35 @@ public class AttendanceSessionDao {
         }
     }
 
-    // We will add a method here later to validate a code:
-    // public AttendanceSession getValidSessionByCode(String code) { ... }
+    /**
+     * Finds an active (non-expired) attendance session by its unique code.
+     * @param code The session code submitted by the student.
+     * @return An AttendanceSession object if a valid, active session is found; otherwise, null.
+     */
+    public AttendanceSession getValidSessionByCode(String code) {
+        // The SQL checks that the current time is before the session's expiration time.
+        String sql = "SELECT * FROM AttendanceSessions WHERE session_code = ? AND expires_at > CURRENT_TIMESTAMP";
+        AttendanceSession session = null;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, code);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                session = new AttendanceSession();
+                session.setSessionId(rs.getInt("session_id"));
+                session.setCourseId(rs.getInt("course_id"));
+                session.setSessionCode(rs.getString("session_code"));
+                session.setCreatedAt(rs.getTimestamp("created_at"));
+                session.setExpiresAt(rs.getTimestamp("expires_at"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return session;
+    }
 }
