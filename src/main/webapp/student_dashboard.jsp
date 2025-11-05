@@ -58,56 +58,61 @@
     <script>
         // --- Configuration ---
         const REQUIRED_SCANS = 3;
-        const scannedCodes = new Set(); // Use a Set to automatically handle duplicates
-        const feedbackContainer = document.getElementById('feedback-container');
+        const scannedCodes = new Set();
         const scanProgressElement = document.getElementById('scan-progress');
+        let isSubmitting = false;
+        let html5QrcodeScanner;
 
-        // This function is called every time a QR code is successfully scanned
-        function onScanSuccess(decodedText, decodedResult) {
-            // Add the newly scanned code to our set.
-            // If it's already in the set, the set's size will not change.
+        // CRITICAL CHANGE: The function is now declared as 'async'
+        async function onScanSuccess(decodedText, decodedResult) {
+            if (isSubmitting) {
+                return;
+            }
+
             scannedCodes.add(decodedText);
 
-            // Update UI feedback
             const currentCount = scannedCodes.size;
             scanProgressElement.innerHTML = 'Code ' + currentCount + ' of ' + REQUIRED_SCANS + ' scanned successfully.';
             scanProgressElement.style.display = 'block';
 
-            // Check if we have collected enough unique codes
             if (currentCount >= REQUIRED_SCANS) {
-                console.log('Collected required number of codes. Submitting...');
+                isSubmitting = true;
+                scanProgressElement.innerHTML = 'Requirement met. Stopping scanner and submitting...';
+                console.log('Collected required codes. Attempting to stop scanner...');
 
-                // Stop the scanner
-                html5QrcodeScanner.clear().catch(error => {
+                try {
+                    // CRITICAL FIX: We 'await' the result of the clear() promise.
+                    // The code will PAUSE here until the scanner is confirmed to be off.
+                    await html5QrcodeScanner.clear();
+                    console.log("Scanner stopped successfully.");
+
+                    // This code will only run AFTER the scanner is off.
+                    document.getElementById('attendanceCodes').value = Array.from(scannedCodes).join(',');
+                    document.getElementById('hidden-form').submit();
+
+                } catch (error) {
                     console.error("Failed to clear html5QrcodeScanner.", error);
-                });
-
-                // Join the codes from the Set into a comma-separated string
-                document.getElementById('attendanceCodes').value = Array.from(scannedCodes).join(',');
-
-                // Submit the form
-                document.getElementById('hidden-form').submit();
+                    // Even if clearing fails, we can still try to submit as a fallback.
+                    document.getElementById('attendanceCodes').value = Array.from(scannedCodes).join(',');
+                    document.getElementById('hidden-form').submit();
+                }
             }
         }
 
         function onScanFailure(error) {
-            // This function is called when a scan attempt fails (e.g., no QR code in view)
-            // We can ignore this to keep the UI clean.
-            // console.warn(`Code scan error = ${error}`);
+            // Ignore scan failures.
         }
 
         // --- Main Execution ---
-        // Only start the scanner if we haven't already been marked present (i.e., no success message)
         const successMessage = document.querySelector('.feedback.success');
         if (!successMessage) {
-            let html5QrcodeScanner = new Html5QrcodeScanner(
+            html5QrcodeScanner = new Html5QrcodeScanner(
                 "qr-reader",
                 { fps: 10, qrbox: { width: 250, height: 250 } },
-                /* verbose= */ false);
-
+                false);
+            
             html5QrcodeScanner.render(onScanSuccess, onScanFailure);
         } else {
-             // If attendance is already marked, hide the scanner box
             document.getElementById('qr-reader').style.display = 'none';
         }
     </script>
