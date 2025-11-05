@@ -43,13 +43,15 @@ public class LoginServlet extends HttpServlet {
             HttpSession session = req.getSession();
             session.setAttribute("user", user);
 
-            // Redirect based on role (extensible for later)
+            // Redirect based on role
             if ("instructor".equals(user.getRole())) {
                 resp.sendRedirect(req.getContextPath() + "/instructor_dashboard.jsp");
+            } else if ("student".equals(user.getRole())) {
+                resp.sendRedirect(req.getContextPath() + "/student_dashboard.jsp");
             } else {
-                // For now, students also go to a placeholder or just generic dashboard
-                // We'll create student_dashboard.jsp later in Phase 2
-                resp.sendRedirect(req.getContextPath() + "/instructor_dashboard.jsp");
+                // Fallback for any other roles (if any)
+                req.setAttribute("errorMessage", "Your user role is not recognized.");
+                req.getRequestDispatcher("/login.jsp").forward(req, resp);
             }
         } else {
             // LOGIN FAILED

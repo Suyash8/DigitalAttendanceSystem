@@ -25,7 +25,7 @@
     <h3>Your Actions:</h3>
     <ul>
         <li><a href="${pageContext.request.contextPath}/manual-attendance?courseId=1">Take Manual Attendance for CS101</a></li>
-        <li><a href="#">Start QR Code Session</a> (Coming Soon Phase 2)</li>
+        <li><a href="${pageContext.request.contextPath}/qr-session?courseId=1">Start QR Code Session for CS101</a></li>
     </ul>
     <br>
     <a href="${pageContext.request.contextPath}/logout">Logout</a>
