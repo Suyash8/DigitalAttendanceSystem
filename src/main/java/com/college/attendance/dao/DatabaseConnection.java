@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseConnection {
-    private static final String DATABASE_URL = "jdbc:h2:./data/attendance_db";
+    private static final String DATABASE_URL = "jdbc:h2:./data/attendance_db;DATABASE_TO_UPPER=FALSE";
     private static final String DATABASE_USER = "sa"; // Default H2 user
     private static final String DATABASE_PASSWORD = ""; // Default H2 password is blank
     private static final String JDBC_DRIVER = "org.h2.Driver";
