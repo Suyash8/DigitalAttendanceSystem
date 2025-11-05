@@ -14,10 +14,14 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.Date;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 @WebServlet("/student-checkin")
 public class StudentCheckinServlet extends HttpServlet {
+
+    private static final int REQUIRED_SCANS = 3;
 
     private AttendanceSessionDao sessionDao;
     private AttendanceDao attendanceDao;
@@ -32,35 +36,45 @@ public class StudentCheckinServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         HttpSession httpSession = req.getSession();
         User student = (User) httpSession.getAttribute("user");
-        String code = req.getParameter("attendanceCode").toUpperCase();
 
-        // 1. Check if the session code is valid and active
-        AttendanceSession session = sessionDao.getValidSessionByCode(code);
+        // The parameter name now matches our hidden form field
+        String codesParam = req.getParameter("attendanceCodes");
 
-        if (session == null) {
-            // FAILED: Invalid or expired code
-            req.setAttribute("errorMessage", "Invalid or expired attendance code. Please try again.");
+        if (codesParam == null || codesParam.isEmpty()) {
+            req.setAttribute("errorMessage", "No codes were submitted.");
             req.getRequestDispatcher("/student_dashboard.jsp").forward(req, resp);
             return;
         }
 
-        // 2. If valid, create an attendance record
-        AttendanceRecord record = new AttendanceRecord();
-        record.setStudentId(student.getUserId());
-        record.setCourseId(session.getCourseId());
-        record.setLectureDate(new Date(System.currentTimeMillis()));
-        record.setStatus("Present");
+        // Split the comma-separated string into a List of codes
+        List<String> submittedCodes = Arrays.asList(codesParam.split(","));
 
-        // 3. Save the single record
-        // The batch save method is overkill but will work fine for a single record.
-        boolean success = attendanceDao.saveBatchAttendance(Collections.singletonList(record));
+        // 1. Check the database for all valid codes from the submitted list
+        List<AttendanceSession> validSessions = sessionDao.getValidSessionsByCodes(submittedCodes);
 
-        if (success) {
-            // SUCCESS
-            resp.sendRedirect(req.getContextPath() + "/student_dashboard.jsp?message=Successfully marked present!");
+        // 2. Check if the number of valid codes meets our requirement
+        if (validSessions.size() >= REQUIRED_SCANS) {
+            // SUCCESS! Mark attendance.
+            // We can just use the details from the first valid session to know the courseId.
+            int courseId = validSessions.get(0).getCourseId();
+
+            AttendanceRecord record = new AttendanceRecord();
+            record.setStudentId(student.getUserId());
+            record.setCourseId(courseId);
+            record.setLectureDate(new Date(System.currentTimeMillis()));
+            record.setStatus("Present");
+
+            boolean success = attendanceDao.saveBatchAttendance(Collections.singletonList(record));
+
+            if (success) {
+                resp.sendRedirect(req.getContextPath() + "/student_dashboard.jsp?message=Success! You have been marked present.");
+            } else {
+                req.setAttribute("errorMessage", "A database error occurred. Please try again.");
+                req.getRequestDispatcher("/student_dashboard.jsp").forward(req, resp);
+            }
         } else {
-            // FAILED: Database error
-            req.setAttribute("errorMessage", "A database error occurred. Please try again.");
+            // FAILED: Not enough valid codes were submitted.
+            req.setAttribute("errorMessage", "Scan was unsuccessful. Not enough valid codes were detected. Please try again.");
             req.getRequestDispatcher("/student_dashboard.jsp").forward(req, resp);
         }
     }
