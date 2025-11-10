@@ -1,33 +1,50 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%-- This checks if a user is actually logged in. If not, it kicks them back to the login page. --%>
-<%
-    if (session.getAttribute("user") == null) {
-        response.sendRedirect("login.jsp");
-        return;
-    }
-%>
-<html>
-<head>
-    <title>Instructor Dashboard</title>
-</head>
-<body>
-    <%-- We can access the user object stored in the session --%>
-    <h1>Welcome, ${sessionScope.user.firstName}!</h1>
-    <%-- Display a feedback message if one exists in the URL parameters --%>
-    <c:if test="${not empty param.message}">
-        <div style="color: green; border: 1px solid green; padding: 10px; margin-bottom: 15px;">
-            <c:out value="${param.message}" />
-        </div>
-    </c:if>
-    <p>You are logged in as an <strong>${sessionScope.user.role}</strong>.</p>
-    <hr>
-    <h3>Your Actions:</h3>
-    <ul>
-        <li><a href="${pageContext.request.contextPath}/manual-attendance?courseId=1">Take Manual Attendance for CS101</a></li>
-        <li><a href="${pageContext.request.contextPath}/qr-session?courseId=1">Start QR Code Session for CS101</a></li>
-    </ul>
-    <br>
-    <a href="${pageContext.request.contextPath}/logout">Logout</a>
-</body>
-</html>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %> <%-- For formatting numbers --%>
+
+<jsp:include page="/templates/header.jsp">
+    <jsp:param name="title" value="Instructor Dashboard"/>
+</jsp:include>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">My Courses</h1>
+    <%-- A button to create new courses could go here in a future phase --%>
+</div>
+
+<div class="row">
+    <c:choose>
+        <c:when test="${not empty courses}">
+            <c:forEach var="course" items="${courses}">
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card custom-card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">${course.courseName}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">${course.courseCode}</h6>
+                            <div class="mt-auto">
+                                <p class="mb-2">Overall Attendance:</p>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar" role="progressbar" style="width: ${course.overallAttendance}%;" aria-valuenow="${course.overallAttendance}" aria-valuemin="0" aria-valuemax="100">
+                                        <fmt:formatNumber value="${course.overallAttendance}" maxFractionDigits="1"/>%
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <%-- In a future step, this will link to the detailed view --%>
+                                    <a href="#" class="btn btn-outline-primary btn-sm">View Details</a>
+                                    <a href="${pageContext.request.contextPath}/manual-attendance?courseId=${course.courseId}" class="btn btn-outline-secondary btn-sm">Manual Entry</a>
+                                    <a href="${pageContext.request.contextPath}/qr-session?courseId=${course.courseId}" class="btn btn-outline-secondary btn-sm">Start QR Session</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </c:forEach>
+        </c:when>
+        <c:otherwise>
+            <div class="col-12">
+                <div class="alert alert-info">You are not currently assigned to any courses.</div>
+            </div>
+        </c:otherwise>
+    </c:choose>
+</div>
+
+<jsp:include page="/templates/footer.jsp"/>

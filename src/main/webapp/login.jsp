@@ -5,13 +5,12 @@
     <jsp:param name="title" value="Login"/>
 </jsp:include>
 
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-        <div class="card shadow-sm">
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card custom-card p-3"> <%-- Applying our custom class --%>
             <div class="card-body">
-                <h2 class="card-title text-center mb-4">Login to Your Account</h2>
+                <h2 class="card-title text-center mb-4" style="font-weight: 700;">Sign In</h2>
 
-                <%-- Display error message if it exists --%>
                 <c:if test="${not empty requestScope.errorMessage}">
                     <div class="alert alert-danger" role="alert">
                         <c:out value="${requestScope.errorMessage}"/>
@@ -20,11 +19,11 @@
 
                 <form action="${pageContext.request.contextPath}/login" method="post">
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email Address</label>
+                        <label for="email" class="form-label fw-medium">Email Address</label>
                         <input type="email" class="form-control" id="email" name="email" required autofocus>
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
+                    <div class="mb-4"> <%-- Increased margin bottom for more space --%>
+                        <label for="password" class="form-label fw-medium">Password</label>
                         <input type="password" class="form-control" id="password" name="password" required>
                     </div>
                     <div class="d-grid">
