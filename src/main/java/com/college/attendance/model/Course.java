@@ -52,4 +52,14 @@ public class Course {
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
     }
+
+    private double overallAttendance;
+
+    public double getOverallAttendance() {
+        return overallAttendance;
+    }
+
+    public void setOverallAttendance(double overallAttendance) {
+        this.overallAttendance = overallAttendance;
+    }
 }
