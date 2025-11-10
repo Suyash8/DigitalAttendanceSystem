@@ -76,4 +76,33 @@ public class CourseDao {
         }
         return students;
     }
+
+    /**
+     * Checks if a specific student is enrolled in a specific course.
+     * @param studentId The ID of the student.
+     * @param courseId The ID of the course.
+     * @return true if an enrollment record exists, false otherwise.
+     */
+    public boolean isStudentEnrolled(int studentId, int courseId) {
+        // This query is optimized to just check for the existence of a row,
+        // which is faster than retrieving data.
+        String sql = "SELECT 1 FROM Enrollments WHERE student_id = ? AND course_id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, studentId);
+            pstmt.setInt(2, courseId);
+
+            // If the query finds a row, rs.next() will be true.
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // In case of a database error, we should fail safely and assume not enrolled.
+            return false;
+        }
+    }
 }
