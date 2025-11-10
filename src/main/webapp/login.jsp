@@ -1,39 +1,39 @@
-<%@ page isELIgnored="false" contentType="text/html;charset=UTF-8" language="java" %>
-<html>
-<head>
-    <title>Login - Digital Attendance</title>
-    <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f4; }
-        .login-container { background: white; padding: 20px 40px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 300px; }
-        h2 { text-align: center; color: #333; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #666; }
-        input[type="email"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        .error { color: red; text-align: center; margin-bottom: 15px; }
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <h2>Classroom Login</h2>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-        <%-- Display error message if it exists in the request scope --%>
-        <% if (request.getAttribute("errorMessage") != null) { %>
-            <div class="error"><%= request.getAttribute("errorMessage") %></div>
-        <% } %>
+<jsp:include page="/templates/header.jsp">
+    <jsp:param name="title" value="Login"/>
+</jsp:include>
 
-        <form action="${pageContext.request.contextPath}/login" method="post">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required autofocus>
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Login to Your Account</h2>
+
+                <%-- Display error message if it exists --%>
+                <c:if test="${not empty requestScope.errorMessage}">
+                    <div class="alert alert-danger" role="alert">
+                        <c:out value="${requestScope.errorMessage}"/>
+                    </div>
+                </c:if>
+
+                <form action="${pageContext.request.contextPath}/login" method="post">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Sign In</button>
+                    </div>
+                </form>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Sign In</button>
-        </form>
+        </div>
     </div>
-</body>
-</html>
+</div>
+
+<jsp:include page="/templates/footer.jsp"/>
