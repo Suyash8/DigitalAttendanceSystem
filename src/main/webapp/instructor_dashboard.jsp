@@ -29,7 +29,7 @@
                                 </div>
                                 <div class="mt-4">
                                     <%-- In a future step, this will link to the detailed view --%>
-                                    <a href="#" class="btn btn-outline-primary btn-sm">View Details</a>
+                                    <a href="${pageContext.request.contextPath}/course-detail?courseId=${course.courseId}" class="btn btn-outline-primary btn-sm">View Details</a>
                                     <a href="${pageContext.request.contextPath}/manual-attendance?courseId=${course.courseId}" class="btn btn-outline-secondary btn-sm">Manual Entry</a>
                                     <a href="${pageContext.request.contextPath}/qr-session?courseId=${course.courseId}" class="btn btn-outline-secondary btn-sm">Start QR Session</a>
                                 </div>
