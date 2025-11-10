@@ -4,11 +4,12 @@ import com.college.attendance.model.Course;
 import com.college.attendance.model.User;
 import com.college.attendance.model.AttendanceRecord;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Date;
+//import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -190,5 +191,32 @@ public class ReportDao {
             e.printStackTrace();
         }
         return records;
+    }
+
+    /**
+     * Fetches all attendance records for a given course on a specific date.
+     * The results are returned in a Map for quick lookups (studentId -> status).
+     * @param courseId The ID of the course.
+     * @param date The specific date to fetch records for.
+     * @return A Map where the key is the student's ID and the value is their attendance status ('Present' or 'Absent').
+     */
+    public Map<Integer, String> getAttendanceRecordsForDate(int courseId, Date date) {
+        Map<Integer, String> recordsMap = new HashMap<>();
+        String sql = "SELECT student_id, status FROM AttendanceRecords WHERE course_id = ? AND lecture_date = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, courseId);
+            pstmt.setDate(2, date);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                recordsMap.put(rs.getInt("student_id"), rs.getString("status"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return recordsMap;
     }
 }
