@@ -112,4 +112,83 @@ public class ReportDao {
 
         return result;
     }
+
+    /**
+     * Fetches a summary of all courses a student is enrolled in, with their personal attendance percentage for each.
+     * @param studentId The ID of the student.
+     * @return A list of Course objects, each populated with the student's personal attendance percentage.
+     */
+    public List<Course> getCourseAttendanceSummaryForStudent(int studentId) {
+        List<Course> courses = new ArrayList<>();
+        // This query joins courses, enrollments, and attendance records to calculate the percentage for a single student.
+        String sql = "WITH StudentCourseAttendance AS (" +
+                "    SELECT " +
+                "        c.course_id, c.course_code, c.course_name, " +
+                "        COUNT(ar.record_id) AS total_records, " +
+                "        COUNT(CASE WHEN ar.status = 'Present' THEN 1 END) AS present_records " +
+                "    FROM Courses c " +
+                "    JOIN Enrollments e ON c.course_id = e.course_id " +
+                "    LEFT JOIN AttendanceRecords ar ON c.course_id = ar.course_id AND e.student_id = ar.student_id " +
+                "    WHERE e.student_id = ? " +
+                "    GROUP BY c.course_id, c.course_code, c.course_name" +
+                ")" +
+                "SELECT " +
+                "    *, " +
+                "    (CAST(present_records AS DOUBLE) / total_records) * 100 AS attendance_percentage " +
+                "FROM StudentCourseAttendance";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, studentId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Course course = new Course();
+                course.setCourseId(rs.getInt("course_id"));
+                course.setCourseCode(rs.getString("course_code"));
+                course.setCourseName(rs.getString("course_name"));
+
+                double percentage = rs.getDouble("attendance_percentage");
+                course.setOverallAttendance(Double.isNaN(percentage) ? 0.0 : percentage);
+
+                courses.add(course);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return courses;
+    }
+
+    /**
+     * Fetches a detailed chronological log of attendance for a single student in a single course.
+     * @param studentId The ID of the student.
+     * @param courseId The ID of the course.
+     * @return A list of AttendanceRecord objects.
+     */
+    public List<AttendanceRecord> getAttendanceLogForStudent(int studentId, int courseId) {
+        List<AttendanceRecord> records = new ArrayList<>();
+        String sql = "SELECT * FROM AttendanceRecords WHERE student_id = ? AND course_id = ? ORDER BY lecture_date DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, studentId);
+            pstmt.setInt(2, courseId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                AttendanceRecord record = new AttendanceRecord();
+                record.setRecordId(rs.getInt("record_id"));
+                record.setStudentId(rs.getInt("student_id"));
+                record.setCourseId(rs.getInt("course_id"));
+                record.setLectureDate(rs.getDate("lecture_date"));
+                record.setStatus(rs.getString("status"));
+                records.add(record);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return records;
+    }
 }
