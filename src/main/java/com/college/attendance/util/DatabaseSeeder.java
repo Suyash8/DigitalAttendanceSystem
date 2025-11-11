@@ -1,98 +1,68 @@
 package com.college.attendance.util;
 
-import com.college.attendance.dao.DatabaseConnection;
+import com.college.attendance.dao.CourseDao;
 import com.college.attendance.dao.UserDao;
+import com.college.attendance.model.Course;
 import com.college.attendance.model.User;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 public class DatabaseSeeder {
+
     public static void main(String[] args) {
+        System.out.println("Starting robust database seeding...");
+
         UserDao userDao = new UserDao();
+        CourseDao courseDao = new CourseDao();
 
-        // 1. Ensure Instructor exists
-        User instructor = userDao.getUserByEmail("prof@college.edu");
-        if (instructor == null) {
-            instructor = new User();
-            instructor.setFirstName("John");
-            instructor.setLastName("Smith");
-            instructor.setEmail("prof@college.edu");
-            instructor.setPasswordHash(PasswordUtil.hashPassword("admin123"));
-            instructor.setRole("instructor");
-            int newId = userDao.createUser(instructor);
-            instructor.setUserId(newId);
-            System.out.println("Seeded Instructor.");
+        // --- 1. Find or Create Users (Now returns full User objects) ---
+        User admin = findOrCreateUser(userDao, "App", "Admin", "admin@college.edu", "superadmin", "admin");
+        User instructor = findOrCreateUser(userDao, "John", "Smith", "prof@college.edu", "admin123", "instructor");
+        User student1 = findOrCreateUser(userDao, "Jane", "Doe", "student@college.edu", "learn123", "student");
+        User student2 = findOrCreateUser(userDao, "Peter", "Jones", "peter@college.edu", "learn123", "student");
+
+        // --- 2. Find or Create Courses (Now returns full Course objects) ---
+        Course javaCourse = findOrCreateCourse(courseDao, "CS101", "Intro to Java Programming", instructor.getUserId());
+        Course physCourse = findOrCreateCourse(courseDao, "PHYS201", "Modern Physics", instructor.getUserId());
+
+        // --- 3. Manage Enrollments (Now uses correct, non-zero IDs) ---
+        enrollStudent(courseDao, student1.getUserId(), javaCourse.getCourseId());
+        enrollStudent(courseDao, student2.getUserId(), javaCourse.getCourseId());
+        enrollStudent(courseDao, student1.getUserId(), physCourse.getCourseId());
+        
+        System.out.println("Database seeding complete.");
+    }
+
+    private static User findOrCreateUser(UserDao dao, String firstName, String lastName, String email, String password, String role) {
+        User user = dao.getUserByEmail(email);
+        if (user == null) {
+            User newUser = new User();
+            newUser.setFirstName(firstName);
+            newUser.setLastName(lastName);
+            newUser.setEmail(email);
+            newUser.setPasswordHash(PasswordUtil.hashPassword(password));
+            newUser.setRole(role);
+            user = dao.createUser(newUser); // This now returns the full user object with its ID
+            System.out.println("CREATED User: " + email + " with ID: " + user.getUserId());
         }
+        return user;
+    }
 
-        // 2. Ensure Student exists
-        User student = userDao.getUserByEmail("student@college.edu");
-        if (student == null) {
-            student = new User();
-            student.setFirstName("Jane");
-            student.setLastName("Doe");
-            student.setEmail("student@college.edu");
-            student.setPasswordHash(PasswordUtil.hashPassword("learn123"));
-            student.setRole("student");
-            int newId = userDao.createUser(student);
-            student.setUserId(newId);
-            System.out.println("Seeded Student.");
+    private static Course findOrCreateCourse(CourseDao dao, String code, String name, int instructorId) {
+        Course course = dao.getCourseByCode(code);
+        if (course == null) {
+            Course newCourse = new Course();
+            newCourse.setCourseCode(code);
+            newCourse.setCourseName(name);
+            newCourse.setInstructorId(instructorId);
+            course = dao.createCourse(newCourse); // This now returns the full course object with its ID
+            System.out.println("CREATED Course: " + code + " with ID: " + course.getCourseId());
         }
-
-        if (userDao.getUserByEmail("admin@college.edu") == null) {
-            User admin = new User();
-            admin.setFirstName("App");
-            admin.setLastName("Admin");
-            admin.setEmail("admin@college.edu");
-            admin.setPasswordHash(PasswordUtil.hashPassword("superadmin"));
-            admin.setRole("admin");
-            int newId = userDao.createUser(admin);
-            admin.setUserId(newId);
-            System.out.println("Seeded Admin: admin@college.edu / superadmin");
-        }
-
-        // 3. Seed a Course and Enrollment (using raw SQL for simplicity here)
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            // Check if course exists
-            PreparedStatement checkCourse = conn.prepareStatement("SELECT course_id FROM Courses WHERE course_code = 'CS101'");
-            ResultSet rs = checkCourse.executeQuery();
-
-            int courseId;
-            if (rs.next()) {
-                courseId = rs.getInt("course_id");
-            } else {
-                // Create Course
-                PreparedStatement insertCourse = conn.prepareStatement(
-                        "INSERT INTO Courses (course_code, course_name, instructor_id) VALUES (?, ?, ?)",
-                        PreparedStatement.RETURN_GENERATED_KEYS);
-                insertCourse.setString(1, "CS101");
-                insertCourse.setString(2, "Intro to Java Programming");
-                insertCourse.setInt(3, instructor.getUserId());
-                insertCourse.executeUpdate();
-                ResultSet genKeys = insertCourse.getGeneratedKeys();
-                genKeys.next();
-                courseId = genKeys.getInt(1);
-                System.out.println("Seeded Course: CS101");
-            }
-
-            // Check Enrollment
-            PreparedStatement checkEnroll = conn.prepareStatement("SELECT * FROM Enrollments WHERE student_id = ? AND course_id = ?");
-            checkEnroll.setInt(1, student.getUserId());
-            checkEnroll.setInt(2, courseId);
-            if (!checkEnroll.executeQuery().next()) {
-                // Create Enrollment
-                PreparedStatement insertEnroll = conn.prepareStatement(
-                        "INSERT INTO Enrollments (student_id, course_id, enrollment_date) VALUES (?, ?, CURRENT_DATE)");
-                insertEnroll.setInt(1, student.getUserId());
-                insertEnroll.setInt(2, courseId);
-                insertEnroll.executeUpdate();
-                System.out.println("Seeded Enrollment for Jane Doe in CS101");
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
+        return course;
+    }
+    
+    private static void enrollStudent(CourseDao dao, int studentId, int courseId) {
+        if (!dao.isStudentEnrolled(studentId, courseId)) {
+            dao.addEnrollment(studentId, courseId);
+            System.out.println("ENROLLED Student ID " + studentId + " in Course ID " + courseId);
         }
     }
 }
