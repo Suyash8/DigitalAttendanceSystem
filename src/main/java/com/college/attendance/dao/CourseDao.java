@@ -130,18 +130,49 @@ public class CourseDao {
         return courses;
     }
 
-    public boolean createCourse(Course course) {
-        String sql = "INSERT INTO Courses (course_code, course_name, instructor_id) VALUES (?, ?, ?)";
+    public Course getCourseByCode(String courseCode) {
+        String sql = "SELECT * FROM Courses WHERE course_code = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, courseCode);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Course course = new Course();
+                    course.setCourseId(rs.getInt("course_id"));
+                    course.setCourseCode(rs.getString("course_code"));
+                    course.setCourseName(rs.getString("course_name"));
+                    course.setInstructorId(rs.getInt("instructor_id"));
+                    return course;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Course createCourse(Course course) {
+        String sql = "INSERT INTO Courses (course_code, course_name, instructor_id) VALUES (?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, course.getCourseCode());
             pstmt.setString(2, course.getCourseName());
             pstmt.setInt(3, course.getInstructorId());
-            return pstmt.executeUpdate() > 0;
+            
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                try (ResultSet rs = pstmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int newId = rs.getInt(1);
+                        // Fetch the full course by the new ID
+                        return getCourseById(newId);
+                    }
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
         }
+        return null;
     }
 
     public boolean updateCourse(Course course) {

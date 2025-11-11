@@ -17,10 +17,9 @@ public class UserDao {
      * @param user The User object to create.
      * @return The auto-generated user_id if successful, or -1 on failure.
      */
-    public int createUser(User user) {
+    public User createUser(User user) {
         String sql = "INSERT INTO Users (first_name, last_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)";
-        int generatedUserId = -1;
-
+        
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -29,20 +28,22 @@ public class UserDao {
             pstmt.setString(3, user.getEmail());
             pstmt.setString(4, user.getPasswordHash());
             pstmt.setString(5, user.getRole());
-
+            
             int affectedRows = pstmt.executeUpdate();
 
             if (affectedRows > 0) {
                 try (ResultSet rs = pstmt.getGeneratedKeys()) {
                     if (rs.next()) {
-                        generatedUserId = rs.getInt(1);
+                        int newId = rs.getInt(1);
+                        // After creating, immediately fetch the full user by the new ID
+                        return getUserById(newId);
                     }
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return generatedUserId;
+        return null; // Return null on failure
     }
 
     /**
