@@ -28,19 +28,21 @@ public class ReportDao {
 
         // This complex SQL query does all the heavy lifting in the database for maximum efficiency.
         String sql = "WITH CourseAttendance AS (" +
-                "    SELECT " +
-                "        c.course_id, c.course_code, c.course_name, " +
-                "        COUNT(ar.record_id) AS total_records, " +
-                "        COUNT(CASE WHEN ar.status = 'Present' THEN 1 END) AS present_records " +
-                "    FROM Courses c " +
-                "    LEFT JOIN AttendanceRecords ar ON c.course_id = ar.course_id " +
-                "    WHERE c.instructor_id = ? " +
-                "    GROUP BY c.course_id, c.course_code, c.course_name" +
-                ")" +
-                "SELECT " +
-                "    *, " +
-                "    (CAST(present_records AS DOUBLE) / total_records) * 100 AS attendance_percentage " +
-                "FROM CourseAttendance";
+                     "    SELECT " +
+                     "        c.course_id, c.course_code, c.course_name, " +
+                     "        COUNT(ar.record_id) AS total_records, " +
+                     "        COUNT(CASE WHEN ar.status = 'Present' THEN 1 END) AS present_records " +
+                     "    FROM Courses c " +
+                     "    LEFT JOIN AttendanceRecords ar ON c.course_id = ar.course_id " +
+                     "    WHERE c.instructor_id = ? " +
+                     "    GROUP BY c.course_id, c.course_code, c.course_name" +
+                     ")" +
+                     "SELECT " +
+                     "    *, " +
+                     "    CASE WHEN total_records = 0 THEN 0.0 " + // If no records, attendance is 0%
+                     "         ELSE (CAST(present_records AS DOUBLE) / total_records) * 100 " +
+                     "    END AS attendance_percentage " +
+                     "FROM CourseAttendance";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -123,20 +125,22 @@ public class ReportDao {
         List<Course> courses = new ArrayList<>();
         // This query joins courses, enrollments, and attendance records to calculate the percentage for a single student.
         String sql = "WITH StudentCourseAttendance AS (" +
-                "    SELECT " +
-                "        c.course_id, c.course_code, c.course_name, " +
-                "        COUNT(ar.record_id) AS total_records, " +
-                "        COUNT(CASE WHEN ar.status = 'Present' THEN 1 END) AS present_records " +
-                "    FROM Courses c " +
-                "    JOIN Enrollments e ON c.course_id = e.course_id " +
-                "    LEFT JOIN AttendanceRecords ar ON c.course_id = ar.course_id AND e.student_id = ar.student_id " +
-                "    WHERE e.student_id = ? " +
-                "    GROUP BY c.course_id, c.course_code, c.course_name" +
-                ")" +
-                "SELECT " +
-                "    *, " +
-                "    (CAST(present_records AS DOUBLE) / total_records) * 100 AS attendance_percentage " +
-                "FROM StudentCourseAttendance";
+                     "    SELECT " +
+                     "        c.course_id, c.course_code, c.course_name, " +
+                     "        COUNT(ar.record_id) AS total_records, " +
+                     "        COUNT(CASE WHEN ar.status = 'Present' THEN 1 END) AS present_records " +
+                     "    FROM Courses c " +
+                     "    JOIN Enrollments e ON c.course_id = e.course_id " +
+                     "    LEFT JOIN AttendanceRecords ar ON c.course_id = ar.course_id AND e.student_id = ar.student_id " +
+                     "    WHERE e.student_id = ? " +
+                     "    GROUP BY c.course_id, c.course_code, c.course_name" +
+                     ")" +
+                     "SELECT " +
+                     "    *, " +
+                     "    CASE WHEN total_records = 0 THEN 0.0 " + // If no records, attendance is 0%
+                     "         ELSE (CAST(present_records AS DOUBLE) / total_records) * 100 " +
+                     "    END AS attendance_percentage " +
+                     "FROM StudentCourseAttendance";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
