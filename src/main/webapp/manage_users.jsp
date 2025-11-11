@@ -6,7 +6,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h2">User Management</h1>
-    <a href="${pageContext.request.contextPath}/user_form.jsp" class="btn btn-primary">Add New User</a>
+    <div>
+        <a href="${pageContext.request.contextPath}/admin_dashboard.jsp" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="${pageContext.request.contextPath}/user_form.jsp" class="btn btn-primary">Add New User</a>
+    </div>
 </div>
 
 <div class="card custom-card">

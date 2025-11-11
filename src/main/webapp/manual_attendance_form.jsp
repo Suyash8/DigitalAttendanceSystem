@@ -73,7 +73,7 @@
     </form>
 
     <br>
-    <a href="${pageContext.request.contextPath}/instructor_dashboard.jsp">Back to Dashboard</a>
+    <a href="${pageContext.request.contextPath}/instructor-dashboard" class="btn btn-secondary mt-3">Back to Dashboard</a>
 
 </div>
 

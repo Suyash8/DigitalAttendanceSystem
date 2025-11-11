@@ -33,7 +33,7 @@
         <img id="qr-code-image" src="" alt="Loading QR Code...">
 
         <div class="footer">
-            <a href="${pageContext.request.contextPath}/instructor_dashboard.jsp" style="color: white;">End Session</a>
+            <a href="${pageContext.request.contextPath}/instructor-dashboard" style="color: white;">End Session & Return to Dashboard</a>
         </div>
     </div>
 
