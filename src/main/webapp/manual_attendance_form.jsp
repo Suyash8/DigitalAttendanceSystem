@@ -43,17 +43,26 @@
                 </tr>
             </thead>
             <tbody>
-                <%-- JSTL tag to loop through the studentRoster attribute we set in the servlet --%>
                 <c:forEach var="student" items="${studentRoster}">
                     <tr>
                         <td><c:out value="${student.lastName}, ${student.firstName}"/></td>
                         <td>
-                            <%-- The name of each radio button group is unique to the student --%>
-                            <input type="radio" id="present_${student.userId}" name="status_${student.userId}" value="Present" required checked>
-                            <label for="present_${student.userId}">Present</label>
+                            <%-- Get the student's status from the map we passed from the servlet --%>
+                            <c:set var="currentStatus" value="${todaysRecords[student.userId]}"/>
 
-                            <input type="radio" id="absent_${student.userId}" name="status_${student.userId}" value="Absent" required>
-                            <label for="absent_${student.userId}">Absent</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio"
+                                       id="present_${student.userId}" name="status_${student.userId}" value="Present" required
+                                       ${(currentStatus == 'Present' or empty currentStatus) ? 'checked' : ''}>
+                                <label class="form-check-label" for="present_${student.userId}">Present</label>
+                            </div>
+
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio"
+                                       id="absent_${student.userId}" name="status_${student.userId}" value="Absent" required
+                                       ${currentStatus == 'Absent' ? 'checked' : ''}>
+                                <label class="form-check-label" for="absent_${student.userId}">Absent</label>
+                            </div>
                         </td>
                     </tr>
                 </c:forEach>

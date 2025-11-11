@@ -41,6 +41,18 @@ public class DatabaseSeeder {
             System.out.println("Seeded Student.");
         }
 
+        if (userDao.getUserByEmail("admin@college.edu") == null) {
+            User admin = new User();
+            admin.setFirstName("App");
+            admin.setLastName("Admin");
+            admin.setEmail("admin@college.edu");
+            admin.setPasswordHash(PasswordUtil.hashPassword("superadmin"));
+            admin.setRole("admin");
+            int newId = userDao.createUser(admin);
+            admin.setUserId(newId);
+            System.out.println("Seeded Admin: admin@college.edu / superadmin");
+        }
+
         // 3. Seed a Course and Enrollment (using raw SQL for simplicity here)
         try (Connection conn = DatabaseConnection.getConnection()) {
             // Check if course exists

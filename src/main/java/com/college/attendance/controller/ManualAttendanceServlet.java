@@ -3,6 +3,7 @@ package com.college.attendance.controller;
 import com.college.attendance.dao.CourseDao;
 import com.college.attendance.model.Course;
 import com.college.attendance.model.User;
+import com.college.attendance.dao.ReportDao;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -12,21 +13,24 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-import com.college.attendance.dao.AttendanceDao; // New import
-import com.college.attendance.model.AttendanceRecord; // New import
-import java.sql.Date; // New import
-import java.util.ArrayList; // New import
-import java.util.Enumeration; // New import
+import com.college.attendance.dao.AttendanceDao;
+import com.college.attendance.model.AttendanceRecord;
+import java.sql.Date;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Map;
 
 @WebServlet("/manual-attendance")
 public class ManualAttendanceServlet extends HttpServlet {
 
     private CourseDao courseDao;
+    private ReportDao reportDao;
     private AttendanceDao attendanceDao;
 
     @Override
     public void init() {
         courseDao = new CourseDao();
+        reportDao = new ReportDao();
         attendanceDao = new AttendanceDao();
     }
 
@@ -47,9 +51,13 @@ public class ManualAttendanceServlet extends HttpServlet {
             List<User> studentRoster = courseDao.getStudentsByCourseId(courseId);
             Course course = courseDao.getCourseById(courseId);
 
+            Date today = new Date(System.currentTimeMillis());
+            Map<Integer, String> todaysRecords = reportDao.getAttendanceRecordsForDate(courseId, today);
+
             // Set the data as attributes in the request scope to be accessed by the JSP
             req.setAttribute("studentRoster", studentRoster);
             req.setAttribute("course", course);
+            req.setAttribute("todaysRecords", todaysRecords);
 
             // Forward the request to the JSP page for rendering
             req.getRequestDispatcher("/manual_attendance_form.jsp").forward(req, resp);

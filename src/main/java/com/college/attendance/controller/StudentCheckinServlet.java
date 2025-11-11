@@ -2,6 +2,7 @@ package com.college.attendance.controller;
 
 import com.college.attendance.dao.AttendanceDao;
 import com.college.attendance.dao.AttendanceSessionDao;
+import com.college.attendance.dao.CourseDao;
 import com.college.attendance.model.AttendanceRecord;
 import com.college.attendance.model.AttendanceSession;
 import com.college.attendance.model.User;
@@ -25,11 +26,13 @@ public class StudentCheckinServlet extends HttpServlet {
 
     private AttendanceSessionDao sessionDao;
     private AttendanceDao attendanceDao;
+    private CourseDao courseDao;
 
     @Override
     public void init() {
         sessionDao = new AttendanceSessionDao();
         attendanceDao = new AttendanceDao();
+        courseDao = new CourseDao();
     }
 
     @Override
@@ -57,6 +60,13 @@ public class StudentCheckinServlet extends HttpServlet {
             // SUCCESS! Mark attendance.
             // We can just use the details from the first valid session to know the courseId.
             int courseId = validSessions.get(0).getCourseId();
+
+            if (!courseDao.isStudentEnrolled(student.getUserId(), courseId)) {
+                // FAILED: The student is not enrolled in the course this QR code belongs to.
+                req.setAttribute("errorMessage", "Check-in failed. You are not enrolled in this course.");
+                req.getRequestDispatcher("/student_dashboard.jsp").forward(req, resp);
+                return; // Stop processing immediately
+            }
 
             AttendanceRecord record = new AttendanceRecord();
             record.setStudentId(student.getUserId());

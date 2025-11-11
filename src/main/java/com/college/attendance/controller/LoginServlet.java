@@ -48,7 +48,9 @@ public class LoginServlet extends HttpServlet {
                 resp.sendRedirect(req.getContextPath() + "/instructor-dashboard");
             } else if ("student".equals(user.getRole())) {
                 resp.sendRedirect(req.getContextPath() + "/student-dashboard");
-            } else {
+            } else if ("admin".equals(user.getRole())) {
+                resp.sendRedirect(req.getContextPath() + "/admin_dashboard.jsp");
+            }  else {
                 // Fallback for any other roles (if any)
                 req.setAttribute("errorMessage", "Your user role is not recognized.");
                 req.getRequestDispatcher("/login.jsp").forward(req, resp);

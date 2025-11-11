@@ -8,6 +8,8 @@ public class Course {
     private String courseName;
     private int instructorId;
     private Timestamp createdAt;
+    private String instructorName;
+
 
     // No-argument constructor
     public Course() {}
@@ -62,4 +64,13 @@ public class Course {
     public void setOverallAttendance(double overallAttendance) {
         this.overallAttendance = overallAttendance;
     }
+
+    public String getInstructorName() {
+        return instructorName;
+    }
+
+    public void setInstructorName(String instructorName) {
+        this.instructorName = instructorName;
+    }
+
 }
