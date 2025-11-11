@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDao {
 
@@ -111,5 +113,38 @@ public class UserDao {
         user.setRole(rs.getString("role"));
         user.setCreatedAt(rs.getTimestamp("created_at"));
         return user;
+    }
+
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM Users ORDER BY last_name, first_name";
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                users.add(mapResultSetToUser(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    public boolean updateUser(User user) {
+        // Note: This implementation doesn't update the password for simplicity.
+        // A real app would have a separate "change password" flow.
+        String sql = "UPDATE Users SET first_name = ?, last_name = ?, email = ?, role = ? WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, user.getFirstName());
+            pstmt.setString(2, user.getLastName());
+            pstmt.setString(3, user.getEmail());
+            pstmt.setString(4, user.getRole());
+            pstmt.setInt(5, user.getUserId());
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
