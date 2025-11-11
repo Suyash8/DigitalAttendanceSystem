@@ -19,7 +19,7 @@
             <div class="card-body">
                 <h5 class="card-title">Course Management</h5>
                 <p class="card-text">Create courses and manage student enrollments.</p>
-                <a href="#" class="btn btn-primary">Manage Courses (Coming Soon)</a>
+                <a href="${pageContext.request.contextPath}/admin/manage-courses" class="btn btn-primary">Manage Courses</a>
             </div>
         </div>
     </div>

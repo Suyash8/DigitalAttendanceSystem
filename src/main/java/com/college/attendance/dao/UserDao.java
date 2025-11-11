@@ -147,4 +147,20 @@ public class UserDao {
             return false;
         }
     }
+
+    public List<User> getUsersByRole(String role) {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM Users WHERE role = ? ORDER BY last_name, first_name";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, role);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                users.add(mapResultSetToUser(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
 }
