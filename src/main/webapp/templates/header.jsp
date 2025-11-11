@@ -79,19 +79,19 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
     <div class="container"> <%-- Changed to fixed-width container for a more centered look on desktop --%>
         <c:choose>
-    <c:when test="${sessionScope.user.role == 'instructor'}">
-        <a class="navbar-brand" href="${pageContext.request.contextPath}/instructor-dashboard">Digital Attendance</a>
-    </c:when>
-    <c:when test="${sessionScope.user.role == 'student'}">
-        <a class="navbar-brand" href="${pageContext.request.contextPath}/student-dashboard">Digital Attendance</a>
-    </c:when>
-    <c:when test="${sessionScope.user.role == 'admin'}">
-        <a class="navbar-brand" href="${pageContext.request.contextPath}/admin_dashboard.jsp">Digital Attendance</a>
-    </c:when>
-    <c:otherwise>
-        <a class="navbar-brand" href="#">Digital Attendance</a>
-    </c:otherwise>
-</c:choose>
+            <c:when test="${sessionScope.user.role == 'instructor'}">
+                <a class="navbar-brand" href="${pageContext.request.contextPath}/instructor-dashboard">Digital Attendance</a>
+            </c:when>
+            <c:when test="${sessionScope.user.role == 'student'}">
+                <a class="navbar-brand" href="${pageContext.request.contextPath}/student-dashboard">Digital Attendance</a>
+            </c:when>
+            <c:when test="${sessionScope.user.role == 'admin'}">
+                <a class="navbar-brand" href="${pageContext.request.contextPath}/admin_dashboard.jsp">Digital Attendance</a>
+            </c:when>
+            <c:otherwise>
+                <a class="navbar-brand" href="#">Digital Attendance</a>
+            </c:otherwise>
+        </c:choose>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
