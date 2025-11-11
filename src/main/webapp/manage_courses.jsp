@@ -6,7 +6,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h2">Course Management</h1>
-    <a href="${pageContext.request.contextPath}/admin/manage-courses?action=new" class="btn btn-primary">Add New Course</a>
+    <div>
+        <a href="${pageContext.request.contextPath}/admin_dashboard.jsp" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="${pageContext.request.contextPath}/admin/manage-courses?action=new" class="btn btn-primary">Add New Course</a>
+    </div>
 </div>
 
 <div class="card custom-card">
