@@ -19,28 +19,20 @@ public class CourseDao {
      * @return A Course object, or null if not found.
      */
     public Course getCourseById(int courseId) {
-        String sql = "SELECT * FROM Courses WHERE course_id = ?";
-        Course course = null;
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, courseId);
-            ResultSet rs = pstmt.executeQuery();
-
+    String sql = "SELECT * FROM Courses WHERE course_id = ?";
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setInt(1, courseId);
+        try (ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
-                course = new Course();
-                course.setCourseId(rs.getInt("course_id"));
-                course.setCourseCode(rs.getString("course_code"));
-                course.setCourseName(rs.getString("course_name"));
-                course.setInstructorId(rs.getInt("instructor_id"));
-                course.setCreatedAt(rs.getTimestamp("created_at"));
+                return mapResultSetToCourse(rs); // USE THE HELPER
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-        return course;
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
+    return null;
+}
 
     /**
      * Retrieves a list of all students currently enrolled in a specific course.
@@ -108,40 +100,61 @@ public class CourseDao {
     }
 
     public List<Course> getAllCourses() {
-        List<Course> courses = new ArrayList<>();
-        // Join with Users table to get the instructor's name directly
-        String sql = "SELECT c.*, u.first_name, u.last_name FROM Courses c " +
-                     "JOIN Users u ON c.instructor_id = u.user_id ORDER BY c.course_name";
+    List<Course> courses = new ArrayList<>();
+    String sql = "SELECT c.*, u.first_name, u.last_name FROM Courses c " +
+                 "JOIN Users u ON c.instructor_id = u.user_id ORDER BY c.course_name";
+    try (Connection conn = DatabaseConnection.getConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+        while (rs.next()) {
+            Course course = mapResultSetToCourse(rs); // USE THE HELPER
+            course.setInstructorName(rs.getString("first_name") + " " + rs.getString("last_name"));
+            courses.add(course);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return courses;
+}
+
+    public Course getCourseByCode(String courseCode) {
+    String sql = "SELECT * FROM Courses WHERE course_code = ?";
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setString(1, courseCode);
+        try (ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return mapResultSetToCourse(rs); // USE THE HELPER
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
+}
+
+    public Course createCourse(Course course) {
+        String sql = "INSERT INTO Courses (course_code, course_name, instructor_id) VALUES (?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                Course course = new Course();
-                course.setCourseId(rs.getInt("course_id"));
-                course.setCourseCode(rs.getString("course_code"));
-                course.setCourseName(rs.getString("course_name"));
-                course.setInstructorId(rs.getInt("instructor_id"));
-                course.setInstructorName(rs.getString("first_name") + " " + rs.getString("last_name"));
-                courses.add(course);
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            pstmt.setString(1, course.getCourseCode());
+            pstmt.setString(2, course.getCourseName());
+            pstmt.setInt(3, course.getInstructorId());
+            
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                try (ResultSet rs = pstmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int newId = rs.getInt(1);
+                        // Fetch the full course by the new ID
+                        return getCourseById(newId);
+                    }
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return courses;
-    }
-
-    public boolean createCourse(Course course) {
-        String sql = "INSERT INTO Courses (course_code, course_name, instructor_id) VALUES (?, ?, ?)";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, course.getCourseCode());
-            pstmt.setString(2, course.getCourseName());
-            pstmt.setInt(3, course.getInstructorId());
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        return null;
     }
 
     public boolean updateCourse(Course course) {
@@ -188,4 +201,13 @@ public class CourseDao {
             return false;
         }
     }
+    
+    private Course mapResultSetToCourse(ResultSet rs) throws SQLException {
+        Course course = new Course();
+        course.setCourseId(rs.getInt("course_id"));
+        course.setCourseCode(rs.getString("course_code"));
+        course.setCourseName(rs.getString("course_name"));
+        course.setInstructorId(rs.getInt("instructor_id"));
+        return course;
+    }  
 }
