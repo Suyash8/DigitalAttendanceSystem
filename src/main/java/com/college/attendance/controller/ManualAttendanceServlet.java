@@ -36,7 +36,6 @@ public class ManualAttendanceServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // For now, we hardcode the course ID. Later, this would come from the instructor's dashboard link.
         String courseIdParam = req.getParameter("courseId");
         if (courseIdParam == null || courseIdParam.isEmpty()) {
             // Handle error - no course specified
@@ -97,7 +96,7 @@ public class ManualAttendanceServlet extends HttpServlet {
 
         if (success) {
             // On success, redirect to the dashboard with a success message
-            resp.sendRedirect(req.getContextPath() + "/instructor_dashboard.jsp?message=Attendance+Saved+Successfully");
+            resp.sendRedirect(req.getContextPath() + "/instructor-dashboard?message=Attendance+Saved+Successfully");
         } else {
             // On failure, send them back to the form with an error message
             // (A more robust solution might re-populate the form with their selections)
